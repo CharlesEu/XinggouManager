@@ -1,5 +1,3 @@
 # Vue 3 + Vite
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
-
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+本项目是一个为商城运营打造现代化后台管理系统 ，核心功能模块包含用户管理、商品管理、预算管理、登录页面、财务报表，系统基础框架有侧边栏、顶部导航栏、标签页导航。主要要点在于，根据后端接口进行前端布局，分离api接口模块、路由模块、样式模块、工具模块、资源模块、组件化模块，实现前端模块化开发。
