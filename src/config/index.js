@@ -11,15 +11,18 @@
 const env = import.meta.env.MODE || 'prod'
 
 const EnvConfig = {
+  // 开发环境
   development: {
     baseApi: '/api',
     mockApi: 'https://mock.apifox.cn/m1/4068509-0-default/api',
   },
+  // 测试环境
   test: {
     baseApi: '//test.future.com/api',
     mockApi: 'https://mock.apifox.cn/m1/4068509-0-default/api',
   },
-  pro: {
+  // 线上环境
+  prod: {
     baseApi: '//future.com/api',
     mockApi: 'https://mock.apifox.cn/m1/4068509-0-default/api',
   },
@@ -27,6 +30,6 @@ const EnvConfig = {
 
 export default {
   env,
-  mock:false,
+  mock:false,  //是否开启mock 总mock开关
   ...EnvConfig[env]
 }

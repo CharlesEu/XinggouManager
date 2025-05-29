@@ -1,7 +1,8 @@
 // import { mock } from "mockjs"
+// 集中管理API接口，实现接口的规范化和可维护性
 import request from "./request"
 
-//请求首页左侧的表格的数据
+//请求首页左侧的表格的数据 发送axios请求
 
 export default{
   // 请求首页左侧表格的数据。

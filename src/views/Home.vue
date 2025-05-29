@@ -3,10 +3,50 @@
 <template>
   <!-- 首页容器 - 整个仪表盘的最外层容器 -->
   <div class="home-container">
+    <!-- 个性化设置抽屉 --> 
+    <el-drawer v-model="drawerVisible" title="个性化设置" size="30%"> 
+      <el-tabs v-model="settingsActiveTab"> 
+        <el-tab-pane label="主题设置" name="theme"> 
+          <div class="theme-settings"> 
+            <h4>主题模式</h4> 
+            <el-radio-group v-model="themeMode" @change="changeThemeMode"> 
+              <el-radio-button label="light">明亮模式</el-radio-button> 
+              <el-radio-button label="dark">暗黑模式</el-radio-button> 
+              <el-radio-button label="auto">跟随系统</el-radio-button> 
+            </el-radio-group> 
+            
+            <h4>主题色</h4> 
+            <div class="color-picker"> 
+              <div 
+                v-for="(color, index) in themeColors" 
+                :key="index" 
+                class="color-item" 
+                :style="{ backgroundColor: color }" 
+                :class="{ active: primaryColor === color }" 
+                @click="changePrimaryColor(color)" 
+              ></div> 
+            </div> 
+          </div> 
+        </el-tab-pane> 
+        <el-tab-pane label="仪表盘设置" name="dashboard"> 
+          <div class="dashboard-settings"> 
+            <h4>组件显示</h4> 
+            <el-checkbox-group v-model="visibleComponents" @change="updateDashboard"> 
+              <el-checkbox label="userInfo">用户信息</el-checkbox> 
+              <el-checkbox label="quickStats">快速统计</el-checkbox> 
+              <el-checkbox label="recentOrders">最近订单</el-checkbox> 
+              <el-checkbox label="salesChart">销售图表</el-checkbox> 
+            </el-checkbox-group> 
+          </div> 
+        </el-tab-pane> 
+      </el-tabs> 
+    </el-drawer>
+    
     <!-- 使用Element Plus的栅格系统布局，设置列间距为20px -->
     <el-row class="home" :gutter="20">
       <!-- 左侧区域 - 占据8列宽度，包含用户信息和表格数据 -->
       <el-col :span="8" style="margin-top: 20px">
+      
         <!-- 用户信息卡片 - 显示管理员基本信息和登录记录 -->
         <el-card shadow="hover" class="user-card">
           <!-- 用户基本信息区域 - 头像、用户名和角色标签 -->
@@ -15,8 +55,17 @@
             <div class="user-info">
               <h3 class="user-name">CharlesEu</h3>
               <!-- 使用Element Plus标签组件显示用户角色 -->
-              <el-tag size="small" type="success">管理员</el-tag>
+              <el-tag size="small" type="success">管理员</el-tag>         
             </div>
+            <!-- 添加设置按钮 -->
+            <el-button 
+              type="primary" 
+              circle 
+              icon="Setting" 
+              size="small" 
+              @click="drawerVisible = true"
+              style="margin-left: auto;"
+            ></el-button>
           </div>
           <!-- 登录信息区域 - 显示上次登录时间和地点 -->
           <div class="login-info">
@@ -38,7 +87,9 @@
             </div>
           </template>
           <!-- Element Plus表格组件 - 展示课程购买数据 -->
-          <el-table :data="tableData" stripe border>
+          <el-button @click="exportExcel">导出Excel</el-button>
+          <el-button @click="exportPDF">导出PDF</el-button>
+          <el-table :data="tableData" stripe border ref="tableRef">
             <!-- 动态生成表格列 - 根据tableLabel对象的键值对生成 -->
             <el-table-column
               v-for="(val, key) in tableLabel"
@@ -53,6 +104,7 @@
 
       <!-- 右侧区域 - 占据16列宽度，包含统计卡片和各类图表 -->
       <el-col :span='16' style="margin-top: 20px">
+        <!-- 其他内容保持不变 -->
         <!-- 统计卡片区域 - 展示多个业务指标卡片 -->
         <div class="num">
           <!-- 循环渲染多个统计卡片 - 每个卡片显示一个业务指标 -->
@@ -127,6 +179,38 @@
 <script setup>
 import { ref, getCurrentInstance, onMounted, reactive } from "vue"
 import * as echarts from "echarts"
+import * as XLSX from 'xlsx'
+import html2pdf from 'html2pdf.js'
+
+// 个性化设置相关的状态
+const drawerVisible = ref(false)
+const settingsActiveTab = ref('theme')
+const themeMode = ref('light')
+const primaryColor = ref('#409EFF')
+const themeColors = ref(['#409EFF', '#67C23A', '#E6A23C', '#F56C6C', '#909399', '#9B59B6'])
+const visibleComponents = ref(['userInfo', 'quickStats', 'recentOrders', 'salesChart'])
+
+
+// 主题模式切换方法
+const changeThemeMode = (mode) => {
+  // 实现主题模式切换逻辑
+  document.documentElement.setAttribute('data-theme', mode)
+  localStorage.setItem('themeMode', mode)
+}
+
+// 主题色切换方法
+const changePrimaryColor = (color) => {
+  primaryColor.value = color
+  // 实现主题色切换逻辑，可以使用CSS变量
+  document.documentElement.style.setProperty('--el-color-primary', color)
+  localStorage.setItem('primaryColor', color)
+}
+
+// 更新仪表盘组件显示
+const updateDashboard = () => {
+  // 根据visibleComponents的值控制组件的显示/隐藏
+  localStorage.setItem('visibleComponents', JSON.stringify(visibleComponents.value))
+}
 
 // 新增状态
 const chartTimeRange = ref('7days')
@@ -438,10 +522,40 @@ const renderCharts = (orderData, userData, videoData) => {
   }
 }
 
-onMounted(()=>{
+const tableRef = ref(null)
+//导出功能
+const exportExcel = () => {
+  const wb = XLSX.utils.table_to_book(tableRef.value)
+  XLSX.writeFile(wb, '报表.xlsx')
+}
+const exportPDF = () => {
+  html2pdf().from(tableRef.value).save('报表.pdf')
+}
+
+// 在onMounted中加载保存的设置
+onMounted(() => {
+  // 加载已有的onMounted内容
   getTableData()
   getCountData()
   getChartData()
+  
+  // 加载保存的主题设置
+  const savedThemeMode = localStorage.getItem('themeMode')
+  if (savedThemeMode) {
+    themeMode.value = savedThemeMode
+    changeThemeMode(savedThemeMode)
+  }
+  
+  const savedPrimaryColor = localStorage.getItem('primaryColor')
+  if (savedPrimaryColor) {
+    primaryColor.value = savedPrimaryColor
+    changePrimaryColor(savedPrimaryColor)
+  }
+  
+  const savedVisibleComponents = localStorage.getItem('visibleComponents')
+  if (savedVisibleComponents) {
+    visibleComponents.value = JSON.parse(savedVisibleComponents)
+  }
 })
 </script>
    
@@ -634,6 +748,72 @@ onMounted(()=>{
         width: 100%;
       }
     }
+  }
+}
+
+// 个性化设置样式
+.theme-settings, .dashboard-settings {
+  padding: 10px;
+  
+  h4 {
+    margin: 15px 0 10px;
+    font-size: 16px;
+    color: #303133;
+  }
+}
+
+.theme-settings {
+  .el-radio-group {
+    width: 100%;
+    display: flex;
+    margin-bottom: 20px;
+    
+    .el-radio-button {
+      flex: 1;
+    }
+  }
+  
+  .color-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    
+    .color-item {
+      width: 30px;
+      height: 30px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      border: 2px solid transparent;
+      
+      &.active {
+        border-color: #909399;
+        transform: scale(1.1);
+        
+        &:after {
+          content: '✓';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          color: white;
+          font-weight: bold;
+        }
+      }
+      
+      &:hover {
+        transform: scale(1.1);
+      }
+    }
+  }
+}
+
+.dashboard-settings {
+  .el-checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
 }
 </style>

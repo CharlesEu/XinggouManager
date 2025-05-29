@@ -1,3 +1,4 @@
+// 封装请求工具类，统一处理错误信息和loading状态
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import config from '../config';
@@ -35,7 +36,7 @@ service.interceptors.response.use(
     if(options.method.toLowerCase()==='get'){
       options.params=options.data
     }
-    //对mock的开关做一个处理
+    //对mock的开关做一个处理 即使总开关关闭 也可以单独控制mock
     let isMock=config.mock
     if(typeof options.mock !=='undefined'){
       isMock=options.mock
@@ -51,3 +52,5 @@ service.interceptors.response.use(
     return service(options)
   }
   export default request
+
+  
